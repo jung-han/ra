@@ -20,6 +20,7 @@ import { Schedule } from "./types.ts";
 interface Props {
   schedules: Schedule[];
   onScheduleTimeClick?: (timeInfo: { day: string, time: number }) => void;
+  onDeleteButtonClick?: (timeInfo: { day: string, time: number }) => void;
 }
 
 const TIMES = [
@@ -35,7 +36,7 @@ const TIMES = [
 ] as const;
 
 
-const ScheduleTable = ({ schedules, onScheduleTimeClick }: Props) => {
+const ScheduleTable = ({ schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
 
   const getLectureBySchedule = (day: string, time: number) =>
     schedules.find(
@@ -46,13 +47,6 @@ const ScheduleTable = ({ schedules, onScheduleTimeClick }: Props) => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
     const colors = ["#fdd", "#ffd", "#dff", "#ddf", "#fdf", "#dfd"];
     return colors[lectures.indexOf(lectureId) % colors.length];
-  };
-
-  const handleRemoveLecture = (day: string, time: number) => {
-    const selected = getLectureBySchedule(day, time);
-    if (selected) {
-      // You might want to implement a toast notification here
-    }
   };
 
   return (
@@ -125,17 +119,18 @@ const ScheduleTable = ({ schedules, onScheduleTimeClick }: Props) => {
                           p={2}
                           fontSize="13px"
                           pos="relative"
+                          onClick={event => event.stopPropagation()}
                         >
                           <Text fontWeight="bold">{schedule.lecture.title}</Text>
                           <Text>{schedule.room}</Text>
                         </Box>
                       </PopoverTrigger>
-                      <PopoverContent>
+                      <PopoverContent onClick={event => event.stopPropagation()}>
                         <PopoverArrow/>
                         <PopoverCloseButton/>
                         <PopoverBody>
                           <Text>강의를 삭제하시겠습니까?</Text>
-                          <Button colorScheme="red" size="xs" onClick={() => handleRemoveLecture(day, timeKey + 1)}>
+                          <Button colorScheme="red" size="xs" onClick={() => onDeleteButtonClick?.({ day, time: timeKey + 1 })}>
                             삭제
                           </Button>
                         </PopoverBody>

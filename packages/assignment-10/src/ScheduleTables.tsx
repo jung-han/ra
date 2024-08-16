@@ -14,8 +14,6 @@ export const ScheduleTables = () => {
 
   const disabledRemoveButton = Object.keys(schedulesMap).length === 1
 
-  console.log(Object.keys(schedulesMap))
-
   const duplicate = (targetId: string) => {
     setSchedulesMap(prev => ({
       ...prev,
@@ -46,11 +44,15 @@ export const ScheduleTables = () => {
             <ScheduleTable
               schedules={schedules}
               onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
+              onDeleteButtonClick={({  day, time  }) => setSchedulesMap((prev) => ({
+                ...prev,
+                [tableId]: prev[tableId].filter(schedule => schedule.day !== day || !schedule.range.includes(time) )
+              }))}
             />
           </Stack>
         ))}
       </Flex>
-      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)}/>
+      {searchInfo && <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)}/>}
     </>
   );
 }
