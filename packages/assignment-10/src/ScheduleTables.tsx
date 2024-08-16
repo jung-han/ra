@@ -32,7 +32,7 @@ export const ScheduleTables = () => {
     <>
       <Flex w="full" gap={6} p={6} flexWrap="wrap">
         {Object.entries(schedulesMap).map(([tableId, schedules], index) => (
-          <Stack key={tableId} width="30%">
+          <Stack key={tableId} width="600px">
             <Flex justifyContent="space-between" alignItems="center">
               <Heading as="h3" fontSize="lg">시간표 {index + 1}</Heading>
               <ButtonGroup size="sm" isAttached>
@@ -43,7 +43,9 @@ export const ScheduleTables = () => {
               </ButtonGroup>
             </Flex>
             <ScheduleTable
+              key={`schedule-table-${index}`}
               schedules={schedules}
+              tableId={tableId}
               onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
               onDeleteButtonClick={({ day, time }) => setSchedulesMap((prev) => ({
                 ...prev,
