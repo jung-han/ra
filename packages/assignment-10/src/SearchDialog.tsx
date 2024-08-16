@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -97,8 +97,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-
-  const filteredLectures = useMemo(() => {
+  const getFilteredLectures = () => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(lecture =>
@@ -122,13 +121,12 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
-  }, [lectures, searchOptions])
+  }
 
-  const lastPage = useMemo(() => Math.ceil(filteredLectures.length / PAGE_SIZE), [filteredLectures.length]);
-
-  const visibleLectures = useMemo(() => filteredLectures.slice(0, page * PAGE_SIZE), [filteredLectures, page]);
-
-  const allMajors = useMemo(() => [...new Set(lectures.map(lecture => lecture.major))], [lectures]);
+  const filteredLectures = getFilteredLectures();
+  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
+  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
+  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
 
   const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
@@ -157,6 +155,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
   useEffect(() => {
     const fetchLectures = async () => {
       const results = await Promise.all([
+        axios.get<Lecture[]>('/schedules-majors.json'),
+        axios.get<Lecture[]>('/schedules-liberal-arts.json'),
+        axios.get<Lecture[]>('/schedules-majors.json'),
+        axios.get<Lecture[]>('/schedules-liberal-arts.json'),
         axios.get<Lecture[]>('/schedules-majors.json'),
         axios.get<Lecture[]>('/schedules-liberal-arts.json'),
       ]);
@@ -196,7 +198,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
       days: searchInfo?.day ? [searchInfo.day] : [],
       times: searchInfo?.time ? [searchInfo.time] : [],
     }))
-    setPage(50);
+    setPage(1);
   }, [searchInfo]);
 
   return (

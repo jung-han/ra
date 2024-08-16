@@ -1,7 +1,7 @@
 import { Button, ButtonGroup, Flex, Heading, Stack } from "@chakra-ui/react";
-import ScheduleTable from "./ScheduleTable.tsx";
-import { useScheduleContext } from "./ScheduleContext.tsx";
-import SearchDialog from "./SearchDialog.tsx";
+import ScheduleTable from "./ScheduleTable";
+import { useScheduleContext } from "./ScheduleContext";
+import SearchDialog from "./SearchDialog";
 import { useState } from "react";
 
 export const ScheduleTables = () => {
@@ -38,15 +38,16 @@ export const ScheduleTables = () => {
               <ButtonGroup size="sm" isAttached>
                 <Button colorScheme="green" onClick={() => setSearchInfo({ tableId })}>시간표 추가</Button>
                 <Button colorScheme="green" mx="1px" onClick={() => duplicate(tableId)}>복제</Button>
-                <Button colorScheme="green" isDisabled={disabledRemoveButton} onClick={() => remove(tableId)}>삭제</Button>
+                <Button colorScheme="green" isDisabled={disabledRemoveButton}
+                        onClick={() => remove(tableId)}>삭제</Button>
               </ButtonGroup>
             </Flex>
             <ScheduleTable
               schedules={schedules}
               onScheduleTimeClick={(timeInfo) => setSearchInfo({ tableId, ...timeInfo })}
-              onDeleteButtonClick={({  day, time  }) => setSchedulesMap((prev) => ({
+              onDeleteButtonClick={({ day, time }) => setSchedulesMap((prev) => ({
                 ...prev,
-                [tableId]: prev[tableId].filter(schedule => schedule.day !== day || !schedule.range.includes(time) )
+                [tableId]: prev[tableId].filter(schedule => schedule.day !== day || !schedule.range.includes(time))
               }))}
             />
           </Stack>

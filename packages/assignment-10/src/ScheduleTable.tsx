@@ -11,11 +11,10 @@ import {
   PopoverContent,
   PopoverTrigger,
   Text,
-  VStack,
 } from '@chakra-ui/react';
 import { DAY_LABELS, 분 } from "./constants";
-import { fill2, parseHnM } from './utils';
-import { Schedule } from "./types.ts";
+import { Schedule } from "./types";
+import { fill2, parseHnM } from "./utils";
 
 interface Props {
   schedules: Schedule[];
@@ -35,13 +34,7 @@ const TIMES = [
     .map((v) => `${parseHnM(v)}~${parseHnM(v + 50 * 분)}`),
 ] as const;
 
-
 const ScheduleTable = ({ schedules, onScheduleTimeClick, onDeleteButtonClick }: Props) => {
-
-  const getLectureBySchedule = (day: string, time: number) =>
-    schedules.find(
-      (schedule) => schedule.day === day && schedule.range[0] === time
-    );
 
   const getColor = (lectureId: string): string => {
     const lectures = [...new Set(schedules.map(({ lecture }) => lecture.id))];
@@ -50,99 +43,91 @@ const ScheduleTable = ({ schedules, onScheduleTimeClick, onDeleteButtonClick }: 
   };
 
   return (
-    <Box border="1px solid" borderColor="gray.300">
-      <Flex
-        as="header"
-        h="40px"
-        borderBottom="1px solid"
-        borderColor="gray.300"
-        zIndex={100}
+    <Box position="relative">
+      <Grid
+        templateColumns={`20% repeat(${DAY_LABELS.length}, 1fr)`}
+        templateRows={`40px repeat(${TIMES.length}, 30px)`}
         bg="white"
+        fontSize="sm"
+        textAlign="center"
+        border="1px solid"
+        borderColor="gray.300"
       >
-        <Grid templateColumns="20% repeat(6, 1fr)" w="full">
-          <GridItem>
-            <Flex align="center" justify="center" h="full" bg="gray.100">
-              <Text>교시</Text>
+        <GridItem borderColor="gray.300" bg="gray.100">
+          <Flex justifyContent="center" alignItems="center" h="full" w="full">
+            <Text fontWeight="bold">교시</Text>
+          </Flex>
+        </GridItem>
+        {DAY_LABELS.map((day) => (
+          <GridItem key={day} borderLeft="1px" borderColor="gray.300" bg="gray.100">
+            <Flex justifyContent="center" alignItems="center" h="full">
+              <Text fontWeight="bold">{day}</Text>
             </Flex>
           </GridItem>
-          {DAY_LABELS.map((day) => (
-            <GridItem key={day} borderLeft="1px solid" borderColor="gray.300">
-              <Flex align="center" justify="center" h="full" bg="gray.100">
-                <Text dangerouslySetInnerHTML={{ __html: day }}/>
+        ))}
+        {TIMES.map((time, rowIndex) => (
+          <>
+            <GridItem
+              key={`${rowIndex + 1}-1`}
+              borderTop="1px solid"
+              borderColor="gray.300"
+              bg={rowIndex > 17 ? 'gray.200' : 'gray.100'}
+            >
+              <Flex justifyContent="center" alignItems="center" h="full">
+                <Text fontSize="xs">{fill2(rowIndex + 1)} ({time})</Text>
               </Flex>
             </GridItem>
-          ))}
-        </Grid>
-      </Flex>
-
-      <Flex>
-        <VStack width="20%" spacing={0}>
-          {TIMES.map((time, timeKey) => (
-            <VStack
-              key={timeKey}
-              h="30px"
-              w="full"
-              bg={timeKey > 17 ? 'gray.200' : 'gray.100'}
-              borderTop={timeKey > 0 ? '1px solid' : 'none'}
-              borderColor="gray.300"
-              spacing={0}
-              justifyContent="center"
-            >
-              <Text fontSize="xs">{fill2(timeKey + 1)} ({time})</Text>
-            </VStack>
-          ))}
-        </VStack>
-
-        {DAY_LABELS.map((day) => (
-          <VStack key={day} w={`${80 / 6}%`} spacing={0}>
-            {TIMES.map((_, timeKey) => {
-              const schedule = getLectureBySchedule(day, timeKey + 1);
-              return (
-                <Box
-                  key={timeKey}
-                  h="30px"
-                  w="full"
-                  bg={timeKey > 17 ? 'gray.100' : 'white'}
-                  borderTop={timeKey > 0 ? '1px solid' : 'none'}
-                  borderLeft="1px solid"
-                  borderColor="gray.300"
-                  cursor="pointer"
-                  _hover={{ bg: 'yellow.100' }}
-                  onClick={() => onScheduleTimeClick?.({ day, time: timeKey + 1 })}
-                >
-                  {schedule && (
-                    <Popover>
-                      <PopoverTrigger>
-                        <Box
-                          h={`calc(${schedule.range.length * 30 - 1}px)`}
-                          bg={getColor(schedule.lecture.id)}
-                          p={2}
-                          fontSize="13px"
-                          pos="relative"
-                          onClick={event => event.stopPropagation()}
-                        >
-                          <Text fontWeight="bold">{schedule.lecture.title}</Text>
-                          <Text>{schedule.room}</Text>
-                        </Box>
-                      </PopoverTrigger>
-                      <PopoverContent onClick={event => event.stopPropagation()}>
-                        <PopoverArrow/>
-                        <PopoverCloseButton/>
-                        <PopoverBody>
-                          <Text>강의를 삭제하시겠습니까?</Text>
-                          <Button colorScheme="red" size="xs" onClick={() => onDeleteButtonClick?.({ day, time: timeKey + 1 })}>
-                            삭제
-                          </Button>
-                        </PopoverBody>
-                      </PopoverContent>
-                    </Popover>
-                  )}
-                </Box>
-              );
-            })}
-          </VStack>
+            {DAY_LABELS.map((day, columnIndex) => (
+              <GridItem
+                key={`${rowIndex + 1}-${columnIndex + 2}`}
+                borderWidth="1px 0 0 1px"
+                borderColor="gray.300"
+                bg={rowIndex > 17 ? 'gray.100' : 'white'}
+                cursor="pointer"
+                _hover={{ bg: 'yellow.100' }}
+                onClick={() => onScheduleTimeClick?.({ day, time: rowIndex + 1 })}
+              />
+            ))}
+          </>
         ))}
-      </Flex>
+      </Grid>
+
+      {schedules.map(({ day, range, room, lecture }) => {
+        const leftIndex = DAY_LABELS.indexOf(day as typeof DAY_LABELS[number]);
+        const topIndex = range[0] - 1;
+        const size = range.length
+
+        return (
+          <Popover key={`${day}-${range[0]}`}>
+            <PopoverTrigger>
+              <Box
+                position="absolute"
+                left={`calc(${20 + (leftIndex * 13.333)}% + 1px)`}
+                top={`${40 + topIndex * 30 + 2}px`}
+                width="calc(13.333% - 1px)"
+                height={size * 30 - 1 + "px"}
+                bg={getColor(lecture.id)}
+                p={1}
+                boxSizing="border-box"
+                cursor="pointer"
+              >
+                <Text fontSize="sm" fontWeight="bold">{lecture.title}</Text>
+                <Text fontSize="xs">{room}</Text>
+              </Box>
+            </PopoverTrigger>
+            <PopoverContent onClick={event => event.stopPropagation()}>
+              <PopoverArrow/>
+              <PopoverCloseButton/>
+              <PopoverBody>
+                <Text>강의를 삭제하시겠습니까?</Text>
+                <Button colorScheme="red" size="xs" onClick={() => onDeleteButtonClick?.({ day, time: range[0] })}>
+                  삭제
+                </Button>
+              </PopoverBody>
+            </PopoverContent>
+          </Popover>
+        );
+      })}
     </Box>
   );
 };
