@@ -40,7 +40,7 @@ interface Props {
     tableId: string;
     day?: string;
     time?: number;
-  };
+  } | null;
   onClose: () => void;
 }
 

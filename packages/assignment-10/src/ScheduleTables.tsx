@@ -55,7 +55,7 @@ export const ScheduleTables = () => {
           </Stack>
         ))}
       </Flex>
-      {searchInfo && <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)}/>}
+      <SearchDialog searchInfo={searchInfo} onClose={() => setSearchInfo(null)}/>
     </>
   );
 }

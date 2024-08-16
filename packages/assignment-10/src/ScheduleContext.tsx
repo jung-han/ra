@@ -1,5 +1,6 @@
 import React, { createContext, PropsWithChildren, useContext, useState } from 'react';
 import { Schedule } from './types';
+import dummyScheduleMap from './dummyScheduleMap';
 
 interface ScheduleContextType {
   schedulesMap: Record<string, Schedule[]>;
@@ -17,14 +18,9 @@ export const useScheduleContext = () => {
 };
 
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
-  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>({
-    'schedule-1': [],
-    'schedule-2': [],
-    'schedule-3': [],
-    'schedule-4': [],
-    'schedule-5': [],
-    'schedule-6': [],
-  });
+  const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
+
+  console.log(schedulesMap);
 
   return (
     <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
