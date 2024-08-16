@@ -20,8 +20,6 @@ export const useScheduleContext = () => {
 export const ScheduleProvider = ({ children }: PropsWithChildren) => {
   const [schedulesMap, setSchedulesMap] = useState<Record<string, Schedule[]>>(dummyScheduleMap);
 
-  console.log(schedulesMap);
-
   return (
     <ScheduleContext.Provider value={{ schedulesMap, setSchedulesMap }}>
       {children}
