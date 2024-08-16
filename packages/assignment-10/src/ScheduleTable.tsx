@@ -15,7 +15,7 @@ import {
 import { CellSize, DAY_LABELS, 분 } from "./constants";
 import { Schedule } from "./types";
 import { fill2, parseHnM } from "./utils";
-import { useDraggable } from "@dnd-kit/core";
+import { useDndContext, useDraggable } from "@dnd-kit/core";
 import { CSS } from '@dnd-kit/utilities';
 import { ComponentProps, Fragment } from "react";
 
@@ -46,12 +46,24 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
     return colors[lectures.indexOf(lectureId) % colors.length];
   };
 
-  // const dndContext = useDndContext();
-  //
-  // console.log(dndContext);
+  const dndContext = useDndContext();
+
+  const getActiveTableId = () => {
+    const activeId = dndContext.active?.id;
+    if (activeId) {
+      return String(activeId).split(":")[0];
+    }
+    return null;
+  }
+
+  const activeTableId = getActiveTableId();
 
   return (
-    <Box position="relative">
+    <Box
+      position="relative"
+      outline={activeTableId === tableId ? "5px dashed" : undefined}
+      outlineColor="blue.300"
+    >
       <Grid
         templateColumns={`120px repeat(${DAY_LABELS.length}, ${CellSize.WIDTH}px)`}
         templateRows={`40px repeat(${TIMES.length}, ${CellSize.HEIGHT}px)`}
@@ -116,11 +128,11 @@ const ScheduleTable = ({ tableId, schedules, onScheduleTimeClick, onDeleteButton
 };
 
 const DraggableSchedule = ({
-                             id,
-                             data,
-                             bg,
-                             onDeleteButtonClick
-                           }: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
+ id,
+ data,
+ bg,
+ onDeleteButtonClick
+}: { id: string; data: Schedule } & ComponentProps<typeof Box> & {
   onDeleteButtonClick: () => void
 }) => {
   const { day, range, room, lecture } = data;
