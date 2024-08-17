@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -32,7 +32,7 @@ import {
 import { useScheduleContext } from './ScheduleContext.tsx';
 import { Lecture } from './types.ts';
 import { parseSchedule } from "./utils.ts";
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { DAY_LABELS } from './constants.ts';
 
 interface Props {
@@ -80,8 +80,34 @@ const TIME_SLOTS = [
   { id: 24, label: "22:35~23:25" },
 ];
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 100;
 
+const fetchSchedule = (() => {
+  const cache: Record<string, Promise<AxiosResponse<Lecture[]>>> = {};
+
+  return async (url: string) => {
+    if (cache[url] !== undefined) {
+      return await cache[url];
+    }
+    cache[url] = axios.get<Lecture[]>(url);
+    return cache[url];
+  }
+})();
+
+const fetchMajors = () => fetchSchedule('/schedules-majors.json');
+const fetchLiberalArts = () => fetchSchedule('/schedules-liberal-arts.json');
+
+// TODO: 이 코드를 개선해서 API 호출을 최소화 해보세요 + Promise.all이 현재 잘못 사용되고 있습니다. 같이 개선해주세요.
+const fetchAllLectures = () => Promise.all([
+  (console.log('API Call 1', performance.now()), fetchMajors()),
+  (console.log('API Call 2', performance.now()), fetchLiberalArts()),
+  (console.log('API Call 3', performance.now()), fetchMajors()),
+  (console.log('API Call 4', performance.now()), fetchLiberalArts()),
+  (console.log('API Call 5', performance.now()), fetchMajors()),
+  (console.log('API Call 6', performance.now()), fetchLiberalArts()),
+]);
+
+// TODO: 이 컴포넌트에서 불필요한 연산이 발생하지 않도록 다양한 방식으로 시도해주세요.
 const SearchDialog = ({ searchInfo, onClose }: Props) => {
   const { setSchedulesMap } = useScheduleContext();
 
@@ -97,7 +123,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     majors: [],
   });
 
-  const getFilteredLectures = () => {
+  const filteredLectures = useMemo(() => {
     const { query = '', credits, grades, days, times, majors } = searchOptions;
     return lectures
       .filter(lecture =>
@@ -121,12 +147,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
         const schedules = lecture.schedule ? parseSchedule(lecture.schedule) : [];
         return schedules.some(s => s.range.some(time => times.includes(time)));
       });
-  }
+  }, [lectures, searchOptions]);
 
-  const filteredLectures = getFilteredLectures();
-  const lastPage = Math.ceil(filteredLectures.length / PAGE_SIZE);
-  const visibleLectures = filteredLectures.slice(0, page * PAGE_SIZE);
-  const allMajors = [...new Set(lectures.map(lecture => lecture.major))];
+  const lastPage = useMemo(() => Math.ceil(filteredLectures.length / PAGE_SIZE), [filteredLectures.length]);
+  const visibleLectures = useMemo(() => filteredLectures.slice(0, page * PAGE_SIZE), [filteredLectures, page]);
+  const allMajors = useMemo(() => [...new Set(lectures.map(lecture => lecture.major))], [lectures]);
 
   const changeSearchOption = (field: keyof SearchOption, value: SearchOption[typeof field]) => {
     setPage(1);
@@ -134,7 +159,7 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     loaderWrapperRef.current?.scrollTo(0, 0);
   };
 
-  const addSchedule = (lecture: Lecture) => {
+  const addSchedule = useCallback((lecture: Lecture) => {
     if (!searchInfo) return;
 
     const { tableId } = searchInfo;
@@ -150,24 +175,17 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     }));
 
     onClose();
-  };
+  }, [onClose, searchInfo, setSchedulesMap]);
 
   useEffect(() => {
-    const fetchLectures = async () => {
-      const results = await Promise.all([
-        axios.get<Lecture[]>('/schedules-majors.json'),
-        axios.get<Lecture[]>('/schedules-liberal-arts.json'),
-        axios.get<Lecture[]>('/schedules-majors.json'),
-        axios.get<Lecture[]>('/schedules-liberal-arts.json'),
-        axios.get<Lecture[]>('/schedules-majors.json'),
-        axios.get<Lecture[]>('/schedules-liberal-arts.json'),
-      ]);
-
-      const allLectures = results.flatMap(result => result.data);
-      setLectures(allLectures);
-    };
-
-    fetchLectures();
+    const start = performance.now();
+    console.log('API 호출 시작: ', start)
+    fetchAllLectures().then(results => {
+      const end = performance.now();
+      console.log('모든 API 호출 완료 ', end)
+      console.log('API 호출에 걸린 시간(ms): ', end - start)
+      setLectures(results.flatMap(result => result.data));
+    })
   }, []);
 
   useEffect(() => {
@@ -344,17 +362,11 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
                 <Table size="sm" variant="striped">
                   <Tbody>
                     {visibleLectures.map((lecture, index) => (
-                      <Tr key={`${lecture.id}-${index}`}>
-                        <Td width="100px">{lecture.id}</Td>
-                        <Td width="50px">{lecture.grade}</Td>
-                        <Td width="200px">{lecture.title}</Td>
-                        <Td width="50px">{lecture.credits}</Td>
-                        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }}/>
-                        <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.schedule }}/>
-                        <Td width="80px">
-                          <Button size="sm" colorScheme="green" onClick={() => addSchedule(lecture)}>추가</Button>
-                        </Td>
-                      </Tr>
+                      <SearchBodyRow
+                        key={`${lecture.id}-${index}`}
+                        lecture={lecture}
+                        addSchedule={addSchedule}
+                      />
                     ))}
                   </Tbody>
                 </Table>
@@ -367,5 +379,21 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
     </Modal>
   );
 };
+
+const SearchBodyRow = memo(({ lecture, addSchedule }: { lecture: Lecture, addSchedule: (lecture: Lecture) => void }) => {
+  return (
+    <Tr>
+      <Td width="100px">{lecture.id}</Td>
+      <Td width="50px">{lecture.grade}</Td>
+      <Td width="200px">{lecture.title}</Td>
+      <Td width="50px">{lecture.credits}</Td>
+      <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }}/>
+      <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.schedule }}/>
+      <Td width="80px">
+        <Button size="sm" colorScheme="green" onClick={() => addSchedule(lecture)}>추가</Button>
+      </Td>
+    </Tr>
+  )
+})
 
 export default SearchDialog;
