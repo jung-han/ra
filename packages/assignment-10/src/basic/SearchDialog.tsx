@@ -381,6 +381,10 @@ const SearchDialog = ({ searchInfo, onClose }: Props) => {
 };
 
 const SearchBodyRow = memo(({ lecture, addSchedule }: { lecture: Lecture, addSchedule: (lecture: Lecture) => void }) => {
+  const handleAddClick = useCallback(() => {
+    addSchedule(lecture);
+  }, [addSchedule, lecture])
+
   return (
     <Tr>
       <Td width="100px">{lecture.id}</Td>
@@ -390,7 +394,7 @@ const SearchBodyRow = memo(({ lecture, addSchedule }: { lecture: Lecture, addSch
       <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.major }}/>
       <Td width="150px" dangerouslySetInnerHTML={{ __html: lecture.schedule }}/>
       <Td width="80px">
-        <Button size="sm" colorScheme="green" onClick={() => addSchedule(lecture)}>추가</Button>
+        <Button size="sm" colorScheme="green" onClick={handleAddClick}>추가</Button>
       </Td>
     </Tr>
   )
