@@ -1,8 +1,12 @@
-import { Event } from '../types';
-import { getWeekDates, isDateInRange } from './dateUtils';
+import { Event } from "../types";
+import { getWeekDates, isDateInRange } from "./dateUtils";
 
-function filterEventsByDateRange(events: Event[], start: Date, end: Date): Event[] {
-  return events.filter(event => {
+function filterEventsByDateRange(
+  events: Event[],
+  start: Date,
+  end: Date
+): Event[] {
+  return events.filter((event) => {
     const eventDate = new Date(event.date);
     return isDateInRange(eventDate, start, end);
   });
@@ -13,10 +17,11 @@ function containsTerm(target: string, term: string) {
 }
 
 function searchEvents(events: Event[], term: string) {
-  return events.filter(({ title, description, location }) =>
-    containsTerm(title, term) ||
-    containsTerm(description, term) ||
-    containsTerm(location, term)
+  return events.filter(
+    ({ title, description, location }) =>
+      containsTerm(title, term) ||
+      containsTerm(description, term) ||
+      containsTerm(location, term)
   );
 }
 
@@ -26,19 +31,32 @@ function filterEventsByDateRangeAtWeek(events: Event[], currentDate: Date) {
 }
 
 function filterEventsByDateRangeAtMonth(events: Event[], currentDate: Date) {
-  const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const monthStart = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth(),
+    1
+  );
+  const monthEnd = new Date(
+    currentDate.getFullYear(),
+    currentDate.getMonth() + 1,
+    0
+  );
   return filterEventsByDateRange(events, monthStart, monthEnd);
 }
 
-export function getFilteredEvents(events: Event[], searchTerm: string, currentDate: Date, view: 'week' | 'month'): Event[] {
+export function getFilteredEvents(
+  events: Event[],
+  searchTerm: string,
+  currentDate: Date,
+  view: "week" | "month"
+): Event[] {
   const searchedEvents = searchEvents(events, searchTerm);
 
-  if (view === 'week') {
+  if (view === "week") {
     return filterEventsByDateRangeAtWeek(searchedEvents, currentDate);
   }
 
-  if (view === 'month') {
+  if (view === "month") {
     return filterEventsByDateRangeAtMonth(searchedEvents, currentDate);
   }
 

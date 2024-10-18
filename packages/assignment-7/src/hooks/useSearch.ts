@@ -1,9 +1,13 @@
-import { useMemo, useState } from 'react';
-import { Event } from '../types';
-import { getFilteredEvents } from '../utils/eventUtils';
+import { useMemo, useState } from "react";
+import { Event } from "../types";
+import { getFilteredEvents } from "../utils/eventUtils";
 
-export const useSearch = (events: Event[], currentDate: Date, view: 'week' | 'month') => {
-  const [searchTerm, setSearchTerm] = useState('');
+export const useSearch = (
+  events: Event[],
+  currentDate: Date,
+  view: "week" | "month"
+) => {
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredEvents = useMemo(() => {
     return getFilteredEvents(events, searchTerm, currentDate, view);
@@ -12,6 +16,6 @@ export const useSearch = (events: Event[], currentDate: Date, view: 'week' | 'mo
   return {
     searchTerm,
     setSearchTerm,
-    filteredEvents
+    filteredEvents,
   };
 };

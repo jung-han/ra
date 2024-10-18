@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Event } from "../types";
-import { useToast } from '@chakra-ui/react';
+import { useToast } from "@chakra-ui/react";
 
 export const useEventOperations = (editing: boolean, onSave?: () => void) => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -8,14 +8,14 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
 
   const fetchEvents = async () => {
     try {
-      const response = await fetch('/api/events');
+      const response = await fetch("/api/events");
       if (!response.ok) {
-        throw new Error('Failed to fetch events');
+        throw new Error("Failed to fetch events");
       }
-      const data = await response.json();
-      setEvents(data);
+      const { events } = await response.json();
+      setEvents(events);
     } catch (error) {
-      console.error('Error fetching events:', error);
+      console.error("Error fetching events:", error);
       toast({
         title: "이벤트 로딩 실패",
         status: "error",
@@ -30,20 +30,20 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
       let response;
       if (editing) {
         response = await fetch(`/api/events/${eventData.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(eventData),
         });
       } else {
-        response = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        response = await fetch("/api/events", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(eventData),
         });
       }
 
       if (!response.ok) {
-        throw new Error('Failed to save event');
+        throw new Error("Failed to save event");
       }
 
       await fetchEvents();
@@ -55,7 +55,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         isClosable: true,
       });
     } catch (error) {
-      console.error('Error saving event:', error);
+      console.error("Error saving event:", error);
       toast({
         title: "일정 저장 실패",
         status: "error",
@@ -67,10 +67,10 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
 
   const deleteEvent = async (id: number) => {
     try {
-      const response = await fetch(`/api/events/${id}`, { method: 'DELETE' });
+      const response = await fetch(`/api/events/${id}`, { method: "DELETE" });
 
       if (!response.ok) {
-        throw new Error('Failed to delete event');
+        throw new Error("Failed to delete event");
       }
 
       await fetchEvents();
@@ -81,7 +81,7 @@ export const useEventOperations = (editing: boolean, onSave?: () => void) => {
         isClosable: true,
       });
     } catch (error) {
-      console.error('Error deleting event:', error);
+      console.error("Error deleting event:", error);
       toast({
         title: "일정 삭제 실패",
         status: "error",
