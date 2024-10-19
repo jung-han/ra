@@ -8,6 +8,11 @@ export const server = setupServer(...handlers);
 
 beforeAll(() => {
   server.listen();
+  vi.useFakeTimers();
+});
+
+beforeEach(() => {
+  vi.setSystemTime(new Date("2024-10-01"));
 });
 
 afterEach(() => {
@@ -17,5 +22,6 @@ afterEach(() => {
 
 afterAll(() => {
   vi.resetAllMocks();
+  vi.useRealTimers();
   server.close();
 });
