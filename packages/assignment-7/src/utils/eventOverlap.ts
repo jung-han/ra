@@ -1,4 +1,4 @@
-import { Event } from '../types';
+import { Event } from "../types";
 
 export function parseDateTime(date: string, time: string) {
   return new Date(`${date}T${time}`);
@@ -8,7 +8,7 @@ export function convertEventToDateRange({ date, startTime, endTime }: Event) {
   return {
     start: parseDateTime(date, startTime),
     end: parseDateTime(date, endTime),
-  }
+  };
 }
 
 export function isOverlapping(event1: Event, event2: Event) {
@@ -19,5 +19,5 @@ export function isOverlapping(event1: Event, event2: Event) {
 }
 
 export function findOverlappingEvents(newEvent: Event, events: Event[]) {
-  return events.filter(event => event.id !== newEvent.id && isOverlapping(event, newEvent));
+  return events.filter((event) => event.id !== newEvent.id && isOverlapping(event, newEvent));
 }

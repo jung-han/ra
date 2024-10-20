@@ -14,7 +14,7 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
       newEvent.id = mockEvents.length + 1; // 간단한 ID 생성
       mockEvents.push(newEvent);
       return HttpResponse.json(newEvent, { status: 201 });
-    })
+    }),
   );
 };
 
@@ -32,6 +32,18 @@ export const setupMockHandlerUpdating = () => {
       repeat: { type: "none", interval: 0 },
       notificationTime: 10,
     },
+    {
+      id: 2,
+      title: "기존 회의2",
+      date: "2024-10-15",
+      startTime: "11:00",
+      endTime: "12:00",
+      description: "기존 팀 미팅 2",
+      location: "회의실 C",
+      category: "업무 회의",
+      repeat: { type: "none", interval: 0 },
+      notificationTime: 5,
+    },
   ];
 
   server.use(
@@ -45,7 +57,7 @@ export const setupMockHandlerUpdating = () => {
 
       mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
       return HttpResponse.json(mockEvents[index]);
-    })
+    }),
   );
 };
 
@@ -75,6 +87,6 @@ export const setupMockHandlerDeletion = () => {
 
       mockEvents.splice(index, 1);
       return new HttpResponse(null, { status: 204 });
-    })
+    }),
   );
 };

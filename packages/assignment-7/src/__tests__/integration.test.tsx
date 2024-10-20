@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, act } from "@testing-library/react";
 import { ChakraProvider } from "@chakra-ui/react";
 import App from "../App";
 import { UserEvent, userEvent } from "@testing-library/user-event";
@@ -10,6 +10,7 @@ import { events } from "../__mocks__/response/events.json" assert { type: "json"
 import {
   setupMockHandlerCreation,
   setupMockHandlerDeletion,
+  setupMockHandlerUpdating,
 } from "../__mocks__/handlersUtils";
 
 const setup = (element: ReactElement) => {
@@ -20,10 +21,9 @@ const setup = (element: ReactElement) => {
 
 const saveSchedule = async (
   user: UserEvent,
-  form: Omit<Event, "id" | "notificationTime" | "repeat">
+  form: Omit<Event, "id" | "notificationTime" | "repeat">,
 ) => {
-  const { title, date, startTime, endTime, location, description, category } =
-    form;
+  const { title, date, startTime, endTime, location, description, category } = form;
 
   // 새 일정 추가 버튼 클릭
   await user.click(screen.getAllByText("일정 추가")[0]);
@@ -81,7 +81,7 @@ describe("일정 CRUD 및 기본 기능", () => {
 
         mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
         return HttpResponse.json(mockEvents[index]);
-      })
+      }),
     );
 
     await user.click(await screen.findByLabelText("Edit event"));
@@ -221,7 +221,7 @@ describe("검색 기능", () => {
             },
           ],
         });
-      })
+      }),
     );
   });
 
@@ -262,125 +262,78 @@ describe("검색 기능", () => {
   });
 });
 
-// 작업중
-describe("일정 충돌 감지", () => {
-  it("겹치는 시간에 새 일정을 추가할 때 경고가 표시되는지 확인한다", async () => {
-    const { user } = setup(<App />);
-
-    // 새 일정 추가 버튼 클릭
-    await user.click(screen.getAllByText("일정 추가")[0]);
-
-    // 겹치는 시간에 새 일정 정보 입력
-    await user.type(screen.getByLabelText("제목"), "새 회의");
-    await user.type(screen.getByLabelText("날짜"), "2024-07-15");
-    await user.type(screen.getByLabelText("시작 시간"), "09:30");
-    await user.type(screen.getByLabelText("종료 시간"), "10:30");
-
-    // 저장 버튼 클릭
-    await user.click(screen.getByTestId("event-submit-button"));
-
-    // 경고 다이얼로그 확인
-    expect(await screen.findByText("일정 겹침 경고")).toBeInTheDocument();
-    expect(screen.getByText(/다음 일정과 겹칩니다/)).toBeInTheDocument();
-    expect(
-      screen.getByText("기존 회의 (2024-07-15 09:00-10:00)")
-    ).toBeInTheDocument();
+describe("일정 충돌", () => {
+  afterEach(() => {
+    server.resetHandlers();
   });
 
-  test("기존 일정의 시간을 수정하여 충돌이 발생할 때 경고가 표시되는지 확인한다", async () => {
-    // 추가 일정 생성 (충돌 대상)
-    events.push({
-      id: 2,
-      title: "다른 회의",
-      date: "2024-07-15",
-      startTime: "08:00",
-      endTime: "09:00",
-      description: "충돌 대상 회의",
-      location: "회의실 B",
+  it("겹치는 시간에 새 일정을 추가할 때 경고가 표시된다", async () => {
+    setupMockHandlerCreation([
+      {
+        id: 1,
+        title: "기존 회의",
+        date: "2024-10-15",
+        startTime: "09:00",
+        endTime: "10:00",
+        description: "기존 팀 미팅",
+        location: "회의실 B",
+        category: "업무",
+        repeat: { type: "none", interval: 0 },
+        notificationTime: 10,
+      },
+    ]);
+    const { user } = setup(<App />);
+
+    await saveSchedule(user, {
+      title: "새 회의",
+      date: "2024-10-15",
+      startTime: "09:30",
+      endTime: "10:30",
+      description: "설명",
+      location: "회의실 A",
       category: "업무",
-      repeat: { type: "none", interval: 0 },
-      notificationTime: 10,
     });
+
+    expect(await screen.findByText("일정 겹침 경고")).toBeInTheDocument();
+    expect(screen.getByText(/다음 일정과 겹칩니다/)).toBeInTheDocument();
+    expect(screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")).toBeInTheDocument();
+  });
+
+  it("기존 일정의 시간을 수정하여 충돌이 발생하면 경고가 노출된다", async () => {
+    setupMockHandlerUpdating();
 
     const { user } = setup(<App />);
 
-    // 기존 일정 수정 버튼 클릭
-    const allEditButton = await screen.findAllByLabelText("Edit event");
-    await user.click(allEditButton[0]);
+    const editButton = (await screen.findAllByLabelText("Edit event"))[1];
+    await user.click(editButton);
 
     // 시간 수정하여 다른 일정과 충돌 발생
     await user.clear(screen.getByLabelText("시작 시간"));
     await user.type(screen.getByLabelText("시작 시간"), "08:30");
     await user.clear(screen.getByLabelText("종료 시간"));
     await user.type(screen.getByLabelText("종료 시간"), "10:30");
+
     await user.click(screen.getByTestId("event-submit-button"));
 
-    // 경고 다이얼로그 확인
     expect(await screen.findByText("일정 겹침 경고")).toBeInTheDocument();
     expect(screen.getByText(/다음 일정과 겹칩니다/)).toBeInTheDocument();
-    expect(
-      screen.getByText("다른 회의 (2024-07-15 08:00-09:00)")
-    ).toBeInTheDocument();
+    expect(screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")).toBeInTheDocument();
   });
 });
 
-// describe("알림 기능", () => {
-//   test("일정 알림을 설정하고 지정된 시간에 알림이 발생하는지 확인한다", async () => {
-//     // 현재 시간 설정
-//     const fillZero = (n: number) => String(n).padStart(2, "0");
-//     const now = Date.now();
-//     const startTime = new Date(Date.now() + 20 * 60000); // 20분 후
-//     const endTime = new Date(Date.now() + 30 * 60000); // 30분 후
-//     const y = startTime.getFullYear();
-//     const m = fillZero(startTime.getMonth() + 1);
-//     const d = fillZero(startTime.getDate());
-//     const fullDate = [y, m, d].join("-");
-//     const title = "알림 테스트 회의";
-//     const notificationTime = 10;
-//     const expectedMessage = `${notificationTime}분 후 ${title} 일정이 시작됩니다.`;
+it("notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트가 노출된다", async () => {
+  vi.setSystemTime(new Date("2024-10-15 08:49:59"));
 
-//     events.length = 0;
-//     events.push({
-//       id: 1,
-//       title,
-//       date: fullDate,
-//       startTime: [startTime.getHours(), startTime.getMinutes()]
-//         .map(fillZero)
-//         .join(":"),
-//       endTime: [endTime.getHours(), endTime.getMinutes()]
-//         .map(fillZero)
-//         .join(":"),
-//       description: "알림 테스트 회의입니다.",
-//       location: "회의실 A",
-//       category: "업무",
-//       repeat: { type: "none", interval: 0 },
-//       notificationTime,
-//     });
+  setup(<App />);
 
-//     setup(<App />);
+  // ! 일정 로딩 완료 후 테스트
+  await screen.findByText("일정 로딩 완료!");
 
-//     expect(
-//       await within(screen.getByTestId("event-list")).findByText(title)
-//     ).toBeInTheDocument();
+  expect(screen.queryByText("10분 후 기존 회의 일정이 시작됩니다.")).not.toBeInTheDocument();
 
-//     // 9분 후로 시간 이동 (알림 발생 1분 전)
-//     vi.setSystemTime(new Date(now + 9 * 60 * 1000));
+  act(() => {
+    vi.advanceTimersByTime(1000);
+  });
 
-//     act(() => {
-//       vi.advanceTimersByTime(1000);
-//     });
-
-//     // 알림이 아직 발생하지 않았는지 확인
-//     expect(screen.queryByText(expectedMessage)).not.toBeInTheDocument();
-
-//     // 10분 후로 이동
-//     vi.setSystemTime(new Date(now + 10 * 60 * 1000));
-
-//     act(() => {
-//       vi.advanceTimersByTime(1000);
-//     });
-
-//     // 알림이 발생하는지 확인
-//     expect(screen.getByText(expectedMessage)).toBeInTheDocument();
-//   });
-// });
+  expect(screen.getByText("10분 후 기존 회의 일정이 시작됩니다.")).toBeInTheDocument();
+});

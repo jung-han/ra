@@ -6,6 +6,8 @@ import { handlers } from "./__mocks__/handlers";
 /* msw */
 export const server = setupServer(...handlers);
 
+vi.stubEnv("TZ", "UTC");
+
 beforeAll(() => {
   server.listen();
   vi.useFakeTimers({ shouldAdvanceTime: true });
