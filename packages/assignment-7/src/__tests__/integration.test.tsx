@@ -21,9 +21,10 @@ const setup = (element: ReactElement) => {
 
 const saveSchedule = async (
   user: UserEvent,
-  form: Omit<Event, "id" | "notificationTime" | "repeat">,
+  form: Omit<Event, "id" | "notificationTime" | "repeat">
 ) => {
-  const { title, date, startTime, endTime, location, description, category } = form;
+  const { title, date, startTime, endTime, location, description, category } =
+    form;
 
   // 새 일정 추가 버튼 클릭
   await user.click(screen.getAllByText("일정 추가")[0]);
@@ -81,7 +82,7 @@ describe("일정 CRUD 및 기본 기능", () => {
 
         mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
         return HttpResponse.json(mockEvents[index]);
-      }),
+      })
     );
 
     await user.click(await screen.findByLabelText("Edit event"));
@@ -221,7 +222,7 @@ describe("검색 기능", () => {
             },
           ],
         });
-      }),
+      })
     );
   });
 
@@ -282,6 +283,7 @@ describe("일정 충돌", () => {
         notificationTime: 10,
       },
     ]);
+
     const { user } = setup(<App />);
 
     await saveSchedule(user, {
@@ -294,9 +296,11 @@ describe("일정 충돌", () => {
       category: "업무",
     });
 
-    expect(await screen.findByText("일정 겹침 경고")).toBeInTheDocument();
+    expect(screen.getByText("일정 겹침 경고")).toBeInTheDocument();
     expect(screen.getByText(/다음 일정과 겹칩니다/)).toBeInTheDocument();
-    expect(screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")).toBeInTheDocument();
+    expect(
+      screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")
+    ).toBeInTheDocument();
   });
 
   it("기존 일정의 시간을 수정하여 충돌이 발생하면 경고가 노출된다", async () => {
@@ -315,9 +319,11 @@ describe("일정 충돌", () => {
 
     await user.click(screen.getByTestId("event-submit-button"));
 
-    expect(await screen.findByText("일정 겹침 경고")).toBeInTheDocument();
+    expect(screen.getByText("일정 겹침 경고")).toBeInTheDocument();
     expect(screen.getByText(/다음 일정과 겹칩니다/)).toBeInTheDocument();
-    expect(screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")).toBeInTheDocument();
+    expect(
+      screen.getByText("기존 회의 (2024-10-15 09:00-10:00)")
+    ).toBeInTheDocument();
   });
 });
 
@@ -329,11 +335,15 @@ it("notificationTime을 10으로 하면 지정 시간 10분 전 알람 텍스트
   // ! 일정 로딩 완료 후 테스트
   await screen.findByText("일정 로딩 완료!");
 
-  expect(screen.queryByText("10분 후 기존 회의 일정이 시작됩니다.")).not.toBeInTheDocument();
+  expect(
+    screen.queryByText("10분 후 기존 회의 일정이 시작됩니다.")
+  ).not.toBeInTheDocument();
 
   act(() => {
     vi.advanceTimersByTime(1000);
   });
 
-  expect(screen.getByText("10분 후 기존 회의 일정이 시작됩니다.")).toBeInTheDocument();
+  expect(
+    screen.getByText("10분 후 기존 회의 일정이 시작됩니다.")
+  ).toBeInTheDocument();
 });
