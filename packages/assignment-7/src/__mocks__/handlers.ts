@@ -12,7 +12,6 @@ export const handlers = [
   http.post("/api/events", async ({ request }) => {
     const newEvent = (await request.json()) as Event;
     newEvent.id = events.length + 1; // 간단한 ID 생성
-    events.push(newEvent);
     return HttpResponse.json(newEvent, { status: 201 });
   }),
 

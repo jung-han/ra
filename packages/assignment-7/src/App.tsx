@@ -106,6 +106,7 @@ function App() {
     Boolean(editingEvent),
     () => setEditingEvent(null)
   );
+
   const { notifications, notifiedEvents, setNotifications } =
     useNotifications(events);
   const { view, setView, currentDate, holidays, navigate } = useCalendarView();
@@ -304,6 +305,8 @@ function App() {
       </VStack>
     );
   };
+
+  console.log(filteredEvents, "??");
 
   return (
     <Box w="full" h="100vh" m="auto" p={5}>
@@ -528,8 +531,9 @@ function App() {
                         {event.title}
                       </Text>
                     </HStack>
+                    <Text>{event.date}</Text>
                     <Text>
-                      {event.date} {event.startTime} - {event.endTime}
+                      {event.startTime} - {event.endTime}
                     </Text>
                     <Text>{event.description}</Text>
                     <Text>{event.location}</Text>
