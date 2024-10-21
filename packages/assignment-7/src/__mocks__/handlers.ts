@@ -11,31 +11,27 @@ export const handlers = [
 
   http.post("/api/events", async ({ request }) => {
     const newEvent = (await request.json()) as Event;
-    newEvent.id = events.length + 1; // 간단한 ID 생성
+    newEvent.id = events.length + 1;
     return HttpResponse.json(newEvent, { status: 201 });
   }),
 
-  // PUT 요청 처리 (이벤트 수정)
   http.put("/api/events/:id", async ({ params, request }) => {
     const { id } = params;
     const updatedEvent = (await request.json()) as Event;
     const index = events.findIndex((event) => event.id === Number(id));
 
     if (index !== -1) {
-      events[index] = { ...events[index], ...updatedEvent };
-      return HttpResponse.json(events[index]);
+      return HttpResponse.json({ ...events[index], ...updatedEvent });
     }
 
     return new HttpResponse(null, { status: 404 });
   }),
 
-  // DELETE 요청 처리 (이벤트 삭제)
   http.delete("/api/events/:id", ({ params }) => {
     const { id } = params;
     const index = events.findIndex((event) => event.id === Number(id));
 
     if (index !== -1) {
-      events.splice(index, 1);
       return new HttpResponse(null, { status: 204 });
     }
 

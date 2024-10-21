@@ -13,12 +13,14 @@ import {
   setupMockHandlerUpdating,
 } from "../__mocks__/handlersUtils";
 
+// ! Hard 여기 제공 안함
 const setup = (element: ReactElement) => {
   const user = userEvent.setup();
 
   return { ...render(<ChakraProvider>{element}</ChakraProvider>), user };
 };
 
+// ! Hard 여기 제공 안함
 const saveSchedule = async (
   user: UserEvent,
   form: Omit<Event, "id" | "notificationTime" | "repeat">

@@ -2,6 +2,7 @@ import { http, HttpResponse } from "msw";
 import { server } from "../setupTests";
 import { Event } from "../types";
 
+// ! Hard 여기 제공 안함
 export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
   const mockEvents: Event[] = [...initEvents];
 
@@ -14,7 +15,7 @@ export const setupMockHandlerCreation = (initEvents = [] as Event[]) => {
       newEvent.id = mockEvents.length + 1; // 간단한 ID 생성
       mockEvents.push(newEvent);
       return HttpResponse.json(newEvent, { status: 201 });
-    }),
+    })
   );
 };
 
@@ -57,7 +58,7 @@ export const setupMockHandlerUpdating = () => {
 
       mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
       return HttpResponse.json(mockEvents[index]);
-    }),
+    })
   );
 };
 
@@ -87,6 +88,6 @@ export const setupMockHandlerDeletion = () => {
 
       mockEvents.splice(index, 1);
       return new HttpResponse(null, { status: 204 });
-    }),
+    })
   );
 };
