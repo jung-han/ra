@@ -6,7 +6,6 @@ import { UserEvent, userEvent } from "@testing-library/user-event";
 import { Event } from "../types";
 import { server } from "../setupTests";
 import { http, HttpResponse } from "msw";
-import { events } from "../__mocks__/response/events.json" assert { type: "json" };
 import {
   setupMockHandlerCreation,
   setupMockHandlerDeletion,
@@ -17,7 +16,7 @@ import {
 const setup = (element: ReactElement) => {
   const user = userEvent.setup();
 
-  return { ...render(<ChakraProvider>{element}</ChakraProvider>), user };
+  return { ...render(<ChakraProvider>{element}</ChakraProvider>), user }; // ? Med: 왜 ChakraProvider로 감싸는지 물어보자
 };
 
 // ! Hard 여기 제공 안함
@@ -28,10 +27,8 @@ const saveSchedule = async (
   const { title, date, startTime, endTime, location, description, category } =
     form;
 
-  // 새 일정 추가 버튼 클릭
   await user.click(screen.getAllByText("일정 추가")[0]);
 
-  // 일정 정보 입력
   await user.type(screen.getByLabelText("제목"), title);
   await user.type(screen.getByLabelText("날짜"), date);
   await user.type(screen.getByLabelText("시작 시간"), startTime);
@@ -40,7 +37,6 @@ const saveSchedule = async (
   await user.type(screen.getByLabelText("위치"), location);
   await user.selectOptions(screen.getByLabelText("카테고리"), category);
 
-  // 저장
   await user.click(screen.getByTestId("event-submit-button"));
 };
 
@@ -72,20 +68,7 @@ describe("일정 CRUD 및 기본 기능", () => {
   it("기존 일정의 세부 정보를 수정하고 변경사항이 정확히 반영된다", async () => {
     const { user } = setup(<App />);
 
-    const mockEvents = structuredClone(events);
-    server.use(
-      http.get("/api/events", () => {
-        return HttpResponse.json({ events: mockEvents });
-      }),
-      http.put("/api/events/:id", async ({ params, request }) => {
-        const { id } = params;
-        const updatedEvent = (await request.json()) as Event;
-        const index = mockEvents.findIndex((event) => event.id === Number(id));
-
-        mockEvents[index] = { ...mockEvents[index], ...updatedEvent };
-        return HttpResponse.json(mockEvents[index]);
-      })
-    );
+    setupMockHandlerUpdating();
 
     await user.click(await screen.findByLabelText("Edit event"));
 
